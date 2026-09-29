@@ -21,7 +21,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum by (service_name) (rate(http_server_duration_milliseconds_count{service_name=~\"$service\"}[$__rate_interval]))",
+          "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval]))",
           "legendFormat": "{{service_name}}",
           "refId": "A"
         }
@@ -40,7 +40,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "100 * sum by (service_name) (rate(http_server_duration_milliseconds_count{service_name=~\"$service\",http_status_code=~\"[45]..\"}[$__rate_interval])) / sum by (service_name) (rate(http_server_duration_milliseconds_count{service_name=~\"$service\"}[$__rate_interval]))",
+          "expr": "100 * sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\",http_response_status_code=~\"[45].*\"}[$__rate_interval])) / sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval]))",
           "legendFormat": "{{service_name}}",
           "refId": "A"
         }
@@ -53,29 +53,29 @@
     },
     {
       "type": "timeseries",
-      "title": "Latency p50 / p95 / p99 (ms)",
+      "title": "Latency p50 / p95 / p99",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 9 },
       "id": 3,
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by (service_name, le) (rate(http_server_duration_milliseconds_bucket{service_name=~\"$service\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.50, sum by (service_name, le) (rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])))",
           "legendFormat": "p50 · {{service_name}}",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum by (service_name, le) (rate(http_server_duration_milliseconds_bucket{service_name=~\"$service\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by (service_name, le) (rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])))",
           "legendFormat": "p95 · {{service_name}}",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum by (service_name, le) (rate(http_server_duration_milliseconds_bucket{service_name=~\"$service\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.99, sum by (service_name, le) (rate(http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[$__rate_interval])))",
           "legendFormat": "p99 · {{service_name}}",
           "refId": "C"
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 5 } },
+        "defaults": { "unit": "s", "custom": { "lineWidth": 2, "fillOpacity": 5 } },
         "overrides": []
       },
       "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } }
@@ -88,13 +88,13 @@
     },
     {
       "type": "table",
-      "title": "Requests por método + status",
+      "title": "Requests por route + método + status",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
       "id": 4,
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum by (service_name, http_method, http_status_code) (rate(http_server_duration_milliseconds_count{service_name=~\"$service\"}[$__rate_interval]))",
+          "expr": "sum by (service_name, http_route, http_request_method, http_response_status_code) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval]))",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -112,7 +112,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "nodejs_event_loop_utilization_ratio{service_name=~\"$service\"}",
+          "expr": "nodejs_eventloop_utilization_ratio{service_name=~\"$service\"}",
           "legendFormat": "{{service_name}}",
           "refId": "A"
         }
@@ -132,7 +132,7 @@
         "label": "Service",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": { "query": "label_values(http_server_duration_milliseconds_count, service_name)", "refId": "StandardVariableQuery" },
+        "query": { "query": "label_values(http_server_request_duration_seconds_count, service_name)", "refId": "StandardVariableQuery" },
         "refresh": 2,
         "includeAll": true,
         "multi": true,
@@ -145,6 +145,6 @@
   "timezone": "",
   "title": "Tickets · Service Overview (RED)",
   "uid": "tickets-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

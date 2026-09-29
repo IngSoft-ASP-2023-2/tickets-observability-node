@@ -50,6 +50,7 @@ services:
       - EVENTS_PORT=5001
       - REDIS_URL=redis://redis:6379
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SEMCONV_STABILITY_OPT_IN=http
     ports:
       - "5001:5001"
     depends_on:
@@ -68,6 +69,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=dummy
       - EVENTS_SERVICE_URL=http://events-service:5001
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SEMCONV_STABILITY_OPT_IN=http
     ports:
       - "5002:5002"
     depends_on:

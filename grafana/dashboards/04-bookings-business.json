@@ -1,0 +1,113 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 0 },
+      "id": 30,
+      "options": {
+        "mode": "markdown",
+        "content": "### Métricas de negocio (Bookings)\n\nMétricas custom emitidas por `booking-service` (`libs/observability` → `getMeter('tickets.booking-service')`). Ver `apps/booking-service/src/bookings.metrics.ts`.\n\n- **`bookings.created`** (Counter) — cantidad de bookings creados, con atributos `event_id`, `status`.\n- **`bookings.total_amount`** (Counter, ARS) — suma monetaria facturada.\n- **`bookings.creation.duration`** (Histogram, ms) — duración end-to-end de crear un booking (incluye la llamada HTTP a `events-service`)."
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Bookings creados (15 min)",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 3 },
+      "id": 31,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(increase(bookings_created_total[15m]))", "refId": "A" }
+      ],
+      "options": { "colorMode": "value", "graphMode": "area", "textMode": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "Revenue total (15 min) — ARS",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 3 },
+      "id": 32,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(increase(bookings_amount_ARS_total[15m]))", "refId": "A" }
+      ],
+      "options": { "colorMode": "value", "graphMode": "area", "textMode": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "fieldConfig": { "defaults": { "unit": "currencyARS", "decimals": 0 } }
+    },
+    {
+      "type": "stat",
+      "title": "p95 duración creación",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 3 },
+      "id": 33,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(bookings_creation_duration_milliseconds_bucket[$__rate_interval])))", "refId": "A" }
+      ],
+      "options": { "colorMode": "value", "graphMode": "area", "textMode": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "fieldConfig": { "defaults": { "unit": "ms", "decimals": 1 } }
+    },
+    {
+      "type": "stat",
+      "title": "Bookings con error (15 min)",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 3 },
+      "id": 34,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(increase(bookings_creation_duration_milliseconds_count{status=\"ERROR\"}[15m]))", "refId": "A" }
+      ],
+      "options": { "colorMode": "value", "graphMode": "area", "textMode": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "values": false } },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Bookings creados por minuto (por evento)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 35,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum by (event_id) (rate(bookings_created_total[$__rate_interval]))", "legendFormat": "{{event_id}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 20, "stacking": { "mode": "normal" } } } },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Revenue por minuto (ARS)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 36,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(rate(bookings_amount_ARS_total[$__rate_interval])) * 60", "legendFormat": "revenue ARS/min", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyARS", "custom": { "lineWidth": 2, "fillOpacity": 20 } } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Duración creación booking (p50/p95/p99)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "id": 37,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(bookings_creation_duration_milliseconds_bucket[$__rate_interval])))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(bookings_creation_duration_milliseconds_bucket[$__rate_interval])))", "legendFormat": "p95", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(bookings_creation_duration_milliseconds_bucket[$__rate_interval])))", "legendFormat": "p99", "refId": "C" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 5 } } }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["tickets", "business", "bookings"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Tickets · Bookings (business metrics)",
+  "uid": "tickets-bookings",
+  "version": 1,
+  "weekStart": ""
+}

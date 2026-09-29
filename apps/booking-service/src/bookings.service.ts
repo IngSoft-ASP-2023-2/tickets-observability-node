@@ -8,6 +8,11 @@ import { GetCommand, PutCommand, DynamoDBDocumentClient } from '@aws-sdk/lib-dyn
 import { randomUUID } from 'node:crypto';
 import { DYNAMO } from './dynamodb.client';
 import { EventClient } from './event-client';
+import {
+  bookingCreationDuration,
+  bookingsCreatedCounter,
+  bookingsRevenueCounter,
+} from './bookings.metrics';
 
 export interface Booking {
   bookingId: string;
@@ -49,19 +54,36 @@ export class BookingsService implements OnModuleInit {
   }
 
   async create(input: { eventId: string; customerEmail: string; quantity: number }): Promise<Booking> {
-    const updatedEvent = await this.events.reserve(input.eventId, input.quantity);
-    const booking: Booking = {
-      bookingId: randomUUID(),
-      eventId: input.eventId,
-      customerEmail: input.customerEmail,
-      quantity: input.quantity,
-      totalAmount: updatedEvent.price * input.quantity,
-      status: 'CONFIRMED',
-      createdAt: new Date().toISOString(),
-    };
-    await this.db.send(new PutCommand({ TableName: TABLE, Item: booking }));
-    this.logger.log(`Booking ${booking.bookingId} created for event ${input.eventId}`);
-    return booking;
+    const startedAt = performance.now();
+    let status: 'CONFIRMED' | 'ERROR' = 'CONFIRMED';
+    try {
+      const updatedEvent = await this.events.reserve(input.eventId, input.quantity);
+      const booking: Booking = {
+        bookingId: randomUUID(),
+        eventId: input.eventId,
+        customerEmail: input.customerEmail,
+        quantity: input.quantity,
+        totalAmount: updatedEvent.price * input.quantity,
+        status: 'CONFIRMED',
+        createdAt: new Date().toISOString(),
+      };
+      await this.db.send(new PutCommand({ TableName: TABLE, Item: booking }));
+      this.logger.log(`Booking ${booking.bookingId} created for event ${input.eventId}`);
+
+      // Métricas de negocio (sección 4.3 del práctico)
+      const attrs = { event_id: input.eventId, status: 'CONFIRMED' };
+      bookingsCreatedCounter.add(1, attrs);
+      bookingsRevenueCounter.add(booking.totalAmount, attrs);
+      return booking;
+    } catch (err) {
+      status = 'ERROR';
+      throw err;
+    } finally {
+      bookingCreationDuration.record(performance.now() - startedAt, {
+        event_id: input.eventId,
+        status,
+      });
+    }
   }
 
   async get(bookingId: string): Promise<Booking> {

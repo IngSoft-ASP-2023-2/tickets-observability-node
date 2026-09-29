@@ -77,21 +77,22 @@ Esperá ~30 s a que buildeen los servicios Node. Luego abrí:
 
 ### Ver telemetría en Grafana
 
-Al levantar el stack, se auto-provisionan **3 dashboards** en la carpeta **"Tickets Observability"** (sidebar → Dashboards):
+Al levantar el stack, se auto-provisionan **4 dashboards** en la carpeta **"Tickets Observability"** (sidebar → Dashboards):
 
-1. **Tickets · Service Overview (RED)** — RPS, error rate, latencias p50/p95/p99, breakdown por endpoint, event loop utilization. Variable `$service` para filtrar.
-2. **Tickets · Distributed Traces** — buscador Tempo con filtro por servicio. Al abrir una traza ves el waterfall completo **web → booking-service → events-service** con propagación de contexto. Desde cualquier span, el botón *"Logs for this span"* salta a Loki correlacionado por `trace_id`.
-3. **Tickets · Logs + Traces** — logs de ambos servicios con volumen por servicio y campo derivado `trace_id` clickeable que abre la traza en Tempo.
+1. **Tickets · Service Overview (RED)** — RPS, error rate, latencias p50/p95/p99, breakdown por route/método/status, event loop utilization. Variable `$service`.
+2. **Tickets · Distributed Traces** — buscador Tempo con filtro por servicio. El waterfall muestra **web → booking-service → events-service** con propagación de contexto. Desde cualquier span, el botón *"Logs for this span"* salta a Loki correlacionado por `trace_id`.
+3. **Tickets · Logs + Traces** — logs de ambos servicios con volumen y `trace_id` derivado clickeable que abre la traza en Tempo.
+4. **Tickets · Bookings (business metrics)** — métricas custom del dominio: bookings creados, revenue en ARS, duración p50/p95/p99 de crear un booking, y bookings con error. Emitidas desde `apps/booking-service/src/bookings.metrics.ts`.
 
 Flow sugerido:
 1. Andá a http://localhost:8091 y hacé una reserva.
 2. Abrí **Distributed Traces** y buscá la traza recién generada.
-3. Después de correr `./scripts/load.sh 60`, mirá el **Service Overview** — vas a ver RPS y latencias reales.
+3. Después de correr `./scripts/load.sh 60`, mirá el **Service Overview** y el dashboard **Bookings** — vas a ver RPS, latencias, y las métricas de negocio.
 
 También podés explorar manualmente en **Explore**:
 - Tempo → Search por `service.name`
-- Prometheus → `http_server_duration_milliseconds_count`
-- Loki → `{service_name="booking-service"}`
+- Prometheus → `http_server_request_duration_seconds_count` (naming HTTP semconv estable) o `bookings_created_total` (métrica custom)
+- Loki → `{service_name="booking-service"}` — cada log incluye `trace_id` y `span_id` inyectados por `PinoInstrumentation`
 
 ### Generar carga
 
