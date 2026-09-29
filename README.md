@@ -209,6 +209,28 @@ Guía completa paso a paso en **[docs/grafana-cloud.md](docs/grafana-cloud.md)**
 
 > ⚠️ El endpoint que da Grafana Cloud (`…grafana.net/otlp`) es **OTLP/HTTP**, no gRPC — usar exporter `otlphttp`, no `otlp`. Cuidado también con la indentación YAML de `authorization` bajo `headers:`.
 
+### Importar los dashboards a Grafana Cloud
+
+Los JSON en `grafana/dashboards/` tienen hardcodeado el UID de datasource del stack LGTM local (`prometheus`, `tempo`, `loki`). En Grafana Cloud los UIDs son distintos (`grafanacloud-<usuario>-prom`, `-traces`, `-logs`), así que al importar los paneles muestran "Datasource not found".
+
+**Fix en 3 pasos por dashboard:**
+
+1. Grafana Cloud → **Dashboards → New → Import** → pegar el JSON de `grafana/dashboards/NN-…json`.
+2. Abierto el dashboard → ⚙️ **Settings → JSON Model** (o Ctrl+E en cada panel).
+3. Reemplazar los UIDs (usá tu usuario de Cloud):
+
+   | Buscar | Reemplazar por |
+   |---|---|
+   | `"uid": "prometheus"` | `"uid": "grafanacloud-<TU-USUARIO>-prom"` |
+   | `"uid": "tempo"` | `"uid": "grafanacloud-<TU-USUARIO>-traces"` |
+   | `"uid": "loki"` | `"uid": "grafanacloud-<TU-USUARIO>-logs"` |
+
+4. **Save changes**.
+
+Alternativa visual (sin tocar JSON): editar cada panel → arriba del query editor, cambiar el dropdown **"Data source"** al `grafanacloud-*` correspondiente → Apply → Save dashboard.
+
+> El nombre exacto lo ves en Grafana Cloud → **Connections → Data sources** — buscá los que empiezan con `grafanacloud-`.
+
 ---
 
 ## Troubleshooting

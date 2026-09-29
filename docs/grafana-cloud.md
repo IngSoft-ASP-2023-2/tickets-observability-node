@@ -126,11 +126,45 @@ Si no aparece nada después de 1-2 min:
 
 ---
 
-## 7. Modo mixto o solo cloud
+## 7. Importar los dashboards a tu instancia Cloud
+
+Los 4 dashboards en `grafana/dashboards/` tienen hardcodeado el UID de datasource del stack LGTM local (`prometheus`, `tempo`, `loki`). En Grafana Cloud los UIDs son otros, así que al importar los paneles quedan con "Datasource not found".
+
+### Paso a paso (por dashboard)
+
+1. **Dashboards → New → Import** en el sidebar de tu Grafana Cloud.
+2. Copiar el contenido de `grafana/dashboards/01-service-overview.json` (o el que quieras) y pegarlo en el textarea.
+3. **Load** → Grafana lo abre.
+4. Arriba a la derecha ⚙️ **Settings → JSON Model**.
+5. Buscar y reemplazar (Cmd/Ctrl+F suele estar deshabilitado; copiá el JSON, editalo en un editor, y pegá de vuelta):
+
+   | Buscar | Reemplazar por |
+   |---|---|
+   | `"uid": "prometheus"` | `"uid": "grafanacloud-<TU-USUARIO>-prom"` |
+   | `"uid": "tempo"` | `"uid": "grafanacloud-<TU-USUARIO>-traces"` |
+   | `"uid": "loki"` | `"uid": "grafanacloud-<TU-USUARIO>-logs"` |
+
+6. **Save changes** en el JSON Model → **Save dashboard**.
+
+### ¿Cómo saber tu UID exacto?
+
+Grafana Cloud → **Connections → Data sources** → los datasources aprovisionados aparecen con nombre `grafanacloud-<usuario>-{prom,traces,logs,alert-state-history,usage-insights,graphite,profiles,knowledgegraph}`. El UID coincide con el nombre.
+
+### Alternativa visual (sin tocar JSON)
+
+Editar cada panel individualmente → arriba del query editor hay un dropdown **"Data source"** → seleccionar el `grafanacloud-*` correspondiente → **Apply** → **Save dashboard**.
+
+Más lento para el dashboard **Service Overview** (5 paneles) pero cero riesgo de romper el JSON.
+
+---
+
+## 8. Modo mixto o solo cloud
 
 - **Ambos**: dejá los dos exporters (`otlp/lgtm` y `otlp/cloud`) en cada pipeline (lo de arriba). Vas a ver los datos en local **y** en cloud.
 - **Solo cloud**: sacá `otlp/lgtm` de los pipelines y podés incluso quitar el servicio `lgtm` del `docker-compose.yml` para ahorrar RAM.
 - **Solo local**: no hagas los pasos 4–5 (config default).
+
+---
 
 ---
 
