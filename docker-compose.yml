@@ -15,7 +15,7 @@ services:
   lgtm:
     image: grafana/otel-lgtm:latest
     ports:
-      - "3000:3000"  # Grafana UI
+      - "3001:3000"  # Grafana UI (mapeado a 3001 para evitar choques con otros procesos)
       - "4319:4317"  # OTLP gRPC interno (no lo usamos directo)
       - "4320:4318"  # OTLP HTTP interno (no lo usamos directo)
     environment:
@@ -70,7 +70,7 @@ services:
     build:
       context: ./apps/web
     ports:
-      - "8080:80"
+      - "8091:80"
     depends_on:
       - events-service
       - booking-service

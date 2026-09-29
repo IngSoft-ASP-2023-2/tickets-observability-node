@@ -36,7 +36,7 @@ Todo se visualiza en **Grafana** (Tempo + Prometheus + Loki, empaquetados en la 
                           ▼             ┌──────────────────┐
                  ┌────────────────┐     │ events-service   │
                  │  Grafana LGTM  │     │  :5001 (NestJS)  │
-                 │  :3000 (UI)    │     └────────┬─────────┘
+                 │  :3001 (UI)    │     └────────┬─────────┘
                  └────────────────┘              │
                                                  ▼
                                           ┌──────────┐
@@ -70,14 +70,14 @@ docker compose up --build -d
 
 Esperá ~30 s a que buildeen los servicios Node. Luego abrí:
 
-- **Frontend**: http://localhost:8080
-- **Grafana**: http://localhost:3000 (login anónimo con rol Admin)
+- **Frontend**: http://localhost:8091
+- **Grafana**: http://localhost:3001 (login anónimo con rol Admin)
 - Events API: http://localhost:5001/events
 - Booking API: http://localhost:5002/bookings/<id>
 
 ### Ver telemetría en Grafana
 
-1. Andá a http://localhost:8080 y hacé una reserva.
+1. Andá a http://localhost:8091 y hacé una reserva.
 2. En Grafana → **Explore** → data source **Tempo** → "Search" → filtrá por `service.name = web` (o `booking-service`).
 3. Abrí una traza: verás los spans encadenados **web → booking-service → events-service** con propagación de contexto.
 4. Data source **Prometheus** → query `http_server_request_duration_seconds_count` (o `http_server_duration_milliseconds_count`) → hay series para ambos servicios.
