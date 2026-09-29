@@ -189,13 +189,15 @@ apps/
 libs/
   observability/     # initObservability() + getMeter() reusables
 grafana/
-  dashboards/        # 4 dashboards JSON auto-provisionados
+  dashboards/        # 4 dashboards JSON auto-provisionados (LGTM local)
+  dashboards-cloud/  # versión portable con __inputs — para import a Grafana Cloud
   provisioning/      # config de provisioning
 docs/
   teorico-observabilidad.md   # material teórico general de la clase
   grafana-cloud.md            # guía para conectar a Grafana Cloud
 scripts/
-  load.sh                     # generador de tráfico
+  load.sh                       # generador de tráfico
+  build-cloud-dashboards.mjs    # regenera grafana/dashboards-cloud/ desde dashboards/
 docker-compose.yml
 otel-collector-config.yaml    # pipelines traces/metrics/logs
 .env.example                  # nunca commitear .env real
@@ -211,25 +213,25 @@ Guía completa paso a paso en **[docs/grafana-cloud.md](docs/grafana-cloud.md)**
 
 ### Importar los dashboards a Grafana Cloud
 
-Los JSON en `grafana/dashboards/` tienen hardcodeado el UID de datasource del stack LGTM local (`prometheus`, `tempo`, `loki`). En Grafana Cloud los UIDs son distintos (`grafanacloud-<usuario>-prom`, `-traces`, `-logs`), así que al importar los paneles muestran "Datasource not found".
+Hay dos versiones de cada dashboard:
 
-**Fix en 3 pasos por dashboard:**
+- **`grafana/dashboards/`** — hardcodeado a los UIDs del stack LGTM local (`prometheus`, `tempo`, `loki`). Los usa el auto-provisioning del compose. **No importar directo en Cloud** (muestran "Datasource not found").
+- **`grafana/dashboards-cloud/`** — versión "portable": al importarlos, Grafana **te muestra dropdowns** para elegir qué datasource asignar a cada uno. Es la vía recomendada para Cloud.
 
-1. Grafana Cloud → **Dashboards → New → Import** → pegar el JSON de `grafana/dashboards/NN-…json`.
-2. Abierto el dashboard → ⚙️ **Settings → JSON Model** (o Ctrl+E en cada panel).
-3. Reemplazar los UIDs (usá tu usuario de Cloud):
+**Flujo de import (por dashboard):**
 
-   | Buscar | Reemplazar por |
-   |---|---|
-   | `"uid": "prometheus"` | `"uid": "grafanacloud-<TU-USUARIO>-prom"` |
-   | `"uid": "tempo"` | `"uid": "grafanacloud-<TU-USUARIO>-traces"` |
-   | `"uid": "loki"` | `"uid": "grafanacloud-<TU-USUARIO>-logs"` |
+1. Grafana Cloud → **Dashboards → New → Import**.
+2. Pegar el JSON de `grafana/dashboards-cloud/NN-…json` o subir el archivo.
+3. Grafana muestra los inputs (`DS_PROMETHEUS`, `DS_TEMPO`, `DS_LOKI` según el dashboard). Seleccionar el datasource `grafanacloud-*-{prom,traces,logs}` correspondiente en cada dropdown.
+4. **Import**.
 
-4. **Save changes**.
+Los UIDs Cloud siempre siguen el patrón `grafanacloud-<TU-USUARIO>-{prom,traces,logs}` — los ves en **Connections → Data sources**.
 
-Alternativa visual (sin tocar JSON): editar cada panel → arriba del query editor, cambiar el dropdown **"Data source"** al `grafanacloud-*` correspondiente → Apply → Save dashboard.
+Si agregás o modificás un dashboard local (`grafana/dashboards/`), regenerá las versiones cloud con:
 
-> El nombre exacto lo ves en Grafana Cloud → **Connections → Data sources** — buscá los que empiezan con `grafanacloud-`.
+```bash
+node scripts/build-cloud-dashboards.mjs
+```
 
 ---
 

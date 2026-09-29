@@ -128,33 +128,32 @@ Si no aparece nada después de 1-2 min:
 
 ## 7. Importar los dashboards a tu instancia Cloud
 
-Los 4 dashboards en `grafana/dashboards/` tienen hardcodeado el UID de datasource del stack LGTM local (`prometheus`, `tempo`, `loki`). En Grafana Cloud los UIDs son otros, así que al importar los paneles quedan con "Datasource not found".
+El repo trae dos versiones de los mismos 4 dashboards:
 
-### Paso a paso (por dashboard)
+- **`grafana/dashboards/`** — hardcodeados a los UIDs del stack LGTM local (`prometheus`, `tempo`, `loki`). Los usa el auto-provisioning del compose. **No importar directo en Cloud** — te van a mostrar "Datasource not found".
+- **`grafana/dashboards-cloud/`** — versión portable con bloque `__inputs`. Al importar en Grafana Cloud, se abre un formulario preguntando qué datasource mapear a cada placeholder (`DS_PROMETHEUS`, `DS_TEMPO`, `DS_LOKI`), con dropdown filtrado por tipo.
+
+### Paso a paso
 
 1. **Dashboards → New → Import** en el sidebar de tu Grafana Cloud.
-2. Copiar el contenido de `grafana/dashboards/01-service-overview.json` (o el que quieras) y pegarlo en el textarea.
-3. **Load** → Grafana lo abre.
-4. Arriba a la derecha ⚙️ **Settings → JSON Model**.
-5. Buscar y reemplazar (Cmd/Ctrl+F suele estar deshabilitado; copiá el JSON, editalo en un editor, y pegá de vuelta):
-
-   | Buscar | Reemplazar por |
-   |---|---|
-   | `"uid": "prometheus"` | `"uid": "grafanacloud-<TU-USUARIO>-prom"` |
-   | `"uid": "tempo"` | `"uid": "grafanacloud-<TU-USUARIO>-traces"` |
-   | `"uid": "loki"` | `"uid": "grafanacloud-<TU-USUARIO>-logs"` |
-
-6. **Save changes** en el JSON Model → **Save dashboard**.
+2. Subir (o pegar) `grafana/dashboards-cloud/01-service-overview.json`.
+3. Grafana muestra el formulario con los inputs del dashboard. En cada dropdown, elegir el datasource `grafanacloud-<TU-USUARIO>-{prom,traces,logs}` correspondiente.
+4. **Import**.
+5. Repetir con los otros 3 dashboards.
 
 ### ¿Cómo saber tu UID exacto?
 
-Grafana Cloud → **Connections → Data sources** → los datasources aprovisionados aparecen con nombre `grafanacloud-<usuario>-{prom,traces,logs,alert-state-history,usage-insights,graphite,profiles,knowledgegraph}`. El UID coincide con el nombre.
+Grafana Cloud → **Connections → Data sources**. Los datasources aprovisionados en tu stack aparecen con nombres del estilo `grafanacloud-<usuario>-{prom,traces,logs,alert-state-history,…}`. El UID coincide con el nombre.
 
-### Alternativa visual (sin tocar JSON)
+### Regenerar los dashboards-cloud
 
-Editar cada panel individualmente → arriba del query editor hay un dropdown **"Data source"** → seleccionar el `grafanacloud-*` correspondiente → **Apply** → **Save dashboard**.
+Si modificás un dashboard local (`grafana/dashboards/`), sincronizá la versión portable con:
 
-Más lento para el dashboard **Service Overview** (5 paneles) pero cero riesgo de romper el JSON.
+```bash
+node scripts/build-cloud-dashboards.mjs
+```
+
+El script recorre todos los `*.json` de `grafana/dashboards/`, reemplaza los UIDs hardcoded por placeholders `${DS_*}` y prepende `__inputs`. Salida en `grafana/dashboards-cloud/`.
 
 ---
 
