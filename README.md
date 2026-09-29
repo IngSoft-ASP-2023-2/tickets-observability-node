@@ -24,7 +24,7 @@ Todo se visualiza en **Grafana** (Tempo + Prometheus + Loki, empaquetados en la 
 ```
                  ┌───────────────┐
    browser ───►  │ web (nginx)   │ ── proxy ──┐
-   :8080         └───────┬───────┘            │
+   :8091         └───────┬───────┘            │
                          │ OTLP/HTTP          │
                          ▼                    ▼
                  ┌─────────────────┐   ┌──────────────────┐
@@ -112,7 +112,7 @@ npm run dev:events     # terminal 1
 npm run dev:booking    # terminal 2
 ```
 
-El frontend en `apps/web/index.html` se puede abrir directo con `python3 -m http.server -d apps/web 8080`, pero **perderás el proxy `/api/*`** — para el flow completo usá `docker compose up web`.
+El frontend en `apps/web/index.html` se puede abrir directo con `python3 -m http.server -d apps/web 8091`, pero **perderás el proxy `/api/*`** — para el flow completo usá `docker compose up web`.
 
 ---
 
@@ -155,7 +155,7 @@ apps/
 libs/
   observability/     # bootstrap OTel reutilizado por ambos servicios
 grafana/
-  dashboards/        # 3 dashboards JSON auto-provisionados
+  dashboards/        # 4 dashboards JSON auto-provisionados
   provisioning/      # config de provisioning (dashboards)
 docs/
   grafana-cloud.md   # guía para conectar el práctico a Grafana Cloud

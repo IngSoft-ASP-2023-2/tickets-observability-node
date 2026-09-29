@@ -7,8 +7,9 @@ const meter = getMeter('tickets.booking-service');
  *
  * Naming: OTel semantic conventions recomiendan puntos como separador y
  * el sufijo de unidad al final para métricas custom. En Prometheus estos
- * nombres se traducen a `bookings_created_total`, `bookings_total_amount_ars_total`,
- * `bookings_creation_duration_ms_bucket`, etc.
+ * nombres se traducen a `bookings_created_total`, `bookings_amount_ARS_total`
+ * (la unidad `ARS` se preserva tal cual en el nombre) y
+ * `bookings_creation_duration_milliseconds_{bucket,count,sum}`.
  */
 
 export const bookingsCreatedCounter = meter.createCounter('bookings.created', {
