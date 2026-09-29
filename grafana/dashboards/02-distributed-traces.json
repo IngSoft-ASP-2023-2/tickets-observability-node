@@ -4,7 +4,7 @@
   "graphTooltip": 0,
   "id": null,
   "links": [
-    { "title": "Service Overview", "type": "dashboards", "tags": ["tickets"] }
+    { "title": "Explore Tempo", "type": "link", "url": "/explore?panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceqlSearch%22%7D%5D%7D%7D&schemaVersion=1", "icon": "external link", "targetBlank": true }
   ],
   "panels": [
     {
@@ -14,19 +14,20 @@
       "id": 10,
       "options": {
         "mode": "markdown",
-        "content": "### Trazas distribuidas\n\nBuscá trazas debajo (Tempo Search). Clickeá una para ver el waterfall completo **web → booking-service → events-service**. Desde cualquier span, el botón **\"Logs for this span\"** (habilitado por `tracesToLogs`) te lleva a los logs de Loki correlacionados por `trace_id`.\n\n> Ver también el **Service Map** en Explore → Tempo → tab \"Service Graph\" (usa Prometheus como backend)."
+        "content": "### Trazas distribuidas\n\nBuscador Tempo debajo. Clickeá una fila para ver el waterfall completo **web → booking-service → events-service**. Desde cualquier span, el botón *\"Logs for this span\"* salta a Loki correlacionado por `trace_id`.\n\n> Filtrá por servicio con la variable **$service** arriba a la izquierda. Para búsquedas más ricas (por duración, atributos, TraceQL), usá **Explore → Tempo** (link arriba a la derecha)."
       }
     },
     {
-      "type": "traces",
-      "title": "Buscar trazas",
+      "type": "table",
+      "title": "Trazas encontradas",
       "gridPos": { "h": 22, "w": 24, "x": 0, "y": 3 },
       "id": 11,
       "datasource": { "type": "tempo", "uid": "tempo" },
       "targets": [
         {
-          "queryType": "traceqlSearch",
           "refId": "A",
+          "datasource": { "type": "tempo", "uid": "tempo" },
+          "queryType": "traceqlSearch",
           "filters": [
             {
               "id": "service-name",
@@ -40,7 +41,24 @@
           "limit": 50,
           "tableType": "traces"
         }
-      ]
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "links": [
+            {
+              "title": "Ver traza",
+              "url": "/explore?left=%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22query%22%3A%22${__data.fields.traceID}%22%7D%5D%7D",
+              "targetBlank": true
+            }
+          ]
+        },
+        "overrides": []
+      }
     }
   ],
   "refresh": "10s",
@@ -62,11 +80,11 @@
       }
     ]
   },
-  "time": { "from": "now-15m", "to": "now" },
+  "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "",
   "title": "Tickets · Distributed Traces",
   "uid": "tickets-traces",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
