@@ -1,0 +1,49 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "*"
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+  resourcedetection:
+    detectors: [env, system]
+    timeout: 2s
+
+exporters:
+  # Envío al stack Grafana LGTM local (all-in-one)
+  otlp/lgtm:
+    endpoint: lgtm:4317
+    tls:
+      insecure: true
+
+  debug:
+    verbosity: basic
+
+  # --- Grafana Cloud (opcional) ---
+  # otlp/cloud:
+  #   endpoint: ${GRAFANA_CLOUD_OTLP_ENDPOINT}
+  #   headers:
+  #     authorization: Basic ${GRAFANA_CLOUD_AUTH}
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resourcedetection, batch]
+      exporters: [otlp/lgtm, debug]
+    metrics:
+      receivers: [otlp]
+      processors: [resourcedetection, batch]
+      exporters: [otlp/lgtm, debug]
+    logs:
+      receivers: [otlp]
+      processors: [resourcedetection, batch]
+      exporters: [otlp/lgtm, debug]

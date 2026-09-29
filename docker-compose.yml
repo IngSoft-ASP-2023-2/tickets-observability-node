@@ -1,0 +1,77 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
+    ports:
+      - "8000:8000"
+
+  # Grafana LGTM all-in-one: Grafana + Loki + Tempo + Prometheus.
+  # UI en http://localhost:3000 (login anónimo, admin/admin).
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000"  # Grafana UI
+      - "4319:4317"  # OTLP gRPC interno (no lo usamos directo)
+      - "4320:4318"  # OTLP HTTP interno (no lo usamos directo)
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC (usado por los servicios Node)
+      - "4318:4318"   # OTLP HTTP (usado por el navegador vía nginx)
+    depends_on:
+      - lgtm
+
+  events-service:
+    build:
+      context: .
+      dockerfile: apps/events-service/Dockerfile
+    environment:
+      - EVENTS_PORT=5001
+      - REDIS_URL=redis://redis:6379
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    ports:
+      - "5001:5001"
+    depends_on:
+      - redis
+      - otel-collector
+
+  booking-service:
+    build:
+      context: .
+      dockerfile: apps/booking-service/Dockerfile
+    environment:
+      - BOOKING_PORT=5002
+      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+      - EVENTS_SERVICE_URL=http://events-service:5001
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    ports:
+      - "5002:5002"
+    depends_on:
+      - dynamodb-local
+      - events-service
+      - otel-collector
+
+  web:
+    build:
+      context: ./apps/web
+    ports:
+      - "8080:80"
+    depends_on:
+      - events-service
+      - booking-service
+      - otel-collector

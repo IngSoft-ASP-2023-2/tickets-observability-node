@@ -1,0 +1,32 @@
+{
+  "name": "tickets-observability-node",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Práctico de observabilidad con OpenTelemetry (Node.js/NestJS)",
+  "workspaces": [
+    "libs/*",
+    "apps/events-service",
+    "apps/booking-service"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "start:events": "npm run start --workspace apps/events-service",
+    "start:booking": "npm run start --workspace apps/booking-service",
+    "dev:events": "npm run dev --workspace apps/events-service",
+    "dev:booking": "npm run dev --workspace apps/booking-service",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "overrides": {
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/resources": "1.26.0",
+    "@opentelemetry/sdk-trace-base": "1.26.0",
+    "@opentelemetry/sdk-metrics": "1.26.0",
+    "@opentelemetry/semantic-conventions": "1.27.0"
+  }
+}
