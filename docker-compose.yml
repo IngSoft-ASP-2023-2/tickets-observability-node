@@ -21,12 +21,21 @@ services:
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      # Auto-provisioning: al levantar aparecen 3 dashboards en la carpeta
+      # "Tickets Observability" sin necesidad de importarlos a mano.
+      - ./grafana/provisioning/dashboards:/otel-lgtm/grafana/conf/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    environment:
+      # Pasadas al collector solo si están definidas en .env; ignoradas si no.
+      - GRAFANA_CLOUD_OTLP_ENDPOINT
+      - GRAFANA_CLOUD_AUTH
     ports:
       - "4317:4317"   # OTLP gRPC (usado por los servicios Node)
       - "4318:4318"   # OTLP HTTP (usado por el navegador vía nginx)
@@ -65,6 +74,7 @@ services:
       - dynamodb-local
       - events-service
       - otel-collector
+    restart: unless-stopped
 
   web:
     build:

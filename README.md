@@ -77,11 +77,21 @@ Esperá ~30 s a que buildeen los servicios Node. Luego abrí:
 
 ### Ver telemetría en Grafana
 
+Al levantar el stack, se auto-provisionan **3 dashboards** en la carpeta **"Tickets Observability"** (sidebar → Dashboards):
+
+1. **Tickets · Service Overview (RED)** — RPS, error rate, latencias p50/p95/p99, breakdown por endpoint, event loop utilization. Variable `$service` para filtrar.
+2. **Tickets · Distributed Traces** — buscador Tempo con filtro por servicio. Al abrir una traza ves el waterfall completo **web → booking-service → events-service** con propagación de contexto. Desde cualquier span, el botón *"Logs for this span"* salta a Loki correlacionado por `trace_id`.
+3. **Tickets · Logs + Traces** — logs de ambos servicios con volumen por servicio y campo derivado `trace_id` clickeable que abre la traza en Tempo.
+
+Flow sugerido:
 1. Andá a http://localhost:8091 y hacé una reserva.
-2. En Grafana → **Explore** → data source **Tempo** → "Search" → filtrá por `service.name = web` (o `booking-service`).
-3. Abrí una traza: verás los spans encadenados **web → booking-service → events-service** con propagación de contexto.
-4. Data source **Prometheus** → query `http_server_request_duration_seconds_count` (o `http_server_duration_milliseconds_count`) → hay series para ambos servicios.
-5. Data source **Loki** → query `{service_name="booking-service"}` → los logs incluyen `trace_id` y `span_id` para saltar a la traza.
+2. Abrí **Distributed Traces** y buscá la traza recién generada.
+3. Después de correr `./scripts/load.sh 60`, mirá el **Service Overview** — vas a ver RPS y latencias reales.
+
+También podés explorar manualmente en **Explore**:
+- Tempo → Search por `service.name`
+- Prometheus → `http_server_duration_milliseconds_count`
+- Loki → `{service_name="booking-service"}`
 
 ### Generar carga
 
@@ -143,6 +153,11 @@ apps/
   web/               # nginx + HTML + JS + OTel web
 libs/
   observability/     # bootstrap OTel reutilizado por ambos servicios
+grafana/
+  dashboards/        # 3 dashboards JSON auto-provisionados
+  provisioning/      # config de provisioning (dashboards)
+docs/
+  grafana-cloud.md   # guía para conectar el práctico a Grafana Cloud
 docker-compose.yml
 otel-collector-config.yaml
 scripts/load.sh
@@ -152,7 +167,7 @@ scripts/load.sh
 
 ## Grafana Cloud (opcional)
 
-`otel-collector-config.yaml` incluye un exporter `otlp/cloud` comentado. Copiá `.env.example` a `.env`, completá las variables `GRAFANA_CLOUD_*` y descomentá el exporter y su referencia en los pipelines.
+Guía completa paso a paso en **[docs/grafana-cloud.md](docs/grafana-cloud.md)**: crear cuenta free, obtener el OTLP endpoint + instance ID + token, armar el header de auth, y togglar el exporter en el collector.
 
 ---
 

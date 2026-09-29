@@ -27,11 +27,12 @@ exporters:
   debug:
     verbosity: basic
 
-  # --- Grafana Cloud (opcional) ---
+  # --- Grafana Cloud (opcional, ver docs/grafana-cloud.md) ---
+  # Descomentar y sumar `otlp/cloud` a los exporters de cada pipeline.
   # otlp/cloud:
-  #   endpoint: ${GRAFANA_CLOUD_OTLP_ENDPOINT}
+  #   endpoint: ${env:GRAFANA_CLOUD_OTLP_ENDPOINT}
   #   headers:
-  #     authorization: Basic ${GRAFANA_CLOUD_AUTH}
+  #     authorization: Basic ${env:GRAFANA_CLOUD_AUTH}
 
 service:
   pipelines:

@@ -1,0 +1,72 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    { "title": "Service Overview", "type": "dashboards", "tags": ["tickets"] }
+  ],
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 0 },
+      "id": 10,
+      "options": {
+        "mode": "markdown",
+        "content": "### Trazas distribuidas\n\nBuscá trazas debajo (Tempo Search). Clickeá una para ver el waterfall completo **web → booking-service → events-service**. Desde cualquier span, el botón **\"Logs for this span\"** (habilitado por `tracesToLogs`) te lleva a los logs de Loki correlacionados por `trace_id`.\n\n> Ver también el **Service Map** en Explore → Tempo → tab \"Service Graph\" (usa Prometheus como backend)."
+      }
+    },
+    {
+      "type": "traces",
+      "title": "Buscar trazas",
+      "gridPos": { "h": 22, "w": 24, "x": 0, "y": 3 },
+      "id": 11,
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "targets": [
+        {
+          "queryType": "traceqlSearch",
+          "refId": "A",
+          "filters": [
+            {
+              "id": "service-name",
+              "tag": "service.name",
+              "operator": "=",
+              "scope": "resource",
+              "value": ["$service"],
+              "valueType": "string"
+            }
+          ],
+          "limit": 50,
+          "tableType": "traces"
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["tickets", "traces"],
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "custom",
+        "query": "booking-service,events-service,web",
+        "current": { "text": "booking-service", "value": "booking-service" },
+        "options": [
+          { "text": "booking-service", "value": "booking-service", "selected": true },
+          { "text": "events-service", "value": "events-service" },
+          { "text": "web", "value": "web" }
+        ]
+      }
+    ]
+  },
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Tickets · Distributed Traces",
+  "uid": "tickets-traces",
+  "version": 1,
+  "weekStart": ""
+}
