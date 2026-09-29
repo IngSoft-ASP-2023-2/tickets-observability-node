@@ -63,7 +63,7 @@ GRAFANA_CLOUD_AUTH=OTg3NjU0OmdsY19YWFhYWFhYWFhY...
 
 ## 5. Activar el exporter en el Collector
 
-Editá `otel-collector-config.yaml` y **descomentá** el bloque `otlp/cloud`:
+Editá `otel-collector-config.yaml` y **descomentá** el bloque `otlphttp/cloud`:
 
 ```yaml
 exporters:
@@ -72,7 +72,9 @@ exporters:
     tls:
       insecure: true
 
-  otlp/cloud:
+  # OJO: el endpoint que da Grafana Cloud (…grafana.net/otlp) es OTLP/HTTP,
+  # NO gRPC. Por eso usamos el exporter `otlphttp`, no `otlp`.
+  otlphttp/cloud:
     endpoint: ${env:GRAFANA_CLOUD_OTLP_ENDPOINT}
     headers:
       authorization: Basic ${env:GRAFANA_CLOUD_AUTH}
@@ -81,18 +83,23 @@ exporters:
     verbosity: basic
 ```
 
-Y sumá `otlp/cloud` a los tres pipelines:
+Y sumá `otlphttp/cloud` a los tres pipelines:
 
 ```yaml
 service:
   pipelines:
     traces:
-      exporters: [otlp/lgtm, otlp/cloud, debug]
+      exporters: [otlp/lgtm, otlphttp/cloud, debug]
     metrics:
-      exporters: [otlp/lgtm, otlp/cloud, debug]
+      exporters: [otlp/lgtm, otlphttp/cloud, debug]
     logs:
-      exporters: [otlp/lgtm, otlp/cloud, debug]
+      exporters: [otlp/lgtm, otlphttp/cloud, debug]
 ```
+
+> **Cuidado con la indentación YAML** de `authorization` — tiene que estar
+> _dentro_ de `headers:` (dos espacios más adentro), no al mismo nivel.
+> Si queda como sibling, el header no se envía y Grafana Cloud rechaza
+> silenciosamente (verás "We could not find any traces yet" en el setup).
 
 También asegurate de que `docker-compose.yml` pase las variables de entorno al collector (ya está preparado — solo `docker compose up -d` toma el `.env` automáticamente).
 

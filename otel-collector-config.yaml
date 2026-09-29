@@ -28,23 +28,25 @@ exporters:
     verbosity: basic
 
   # --- Grafana Cloud (opcional, ver docs/grafana-cloud.md) ---
-  # Descomentar y sumar `otlp/cloud` a los exporters de cada pipeline.
-  # otlp/cloud:
-  #   endpoint: ${env:GRAFANA_CLOUD_OTLP_ENDPOINT}
-  #   headers:
-  #     authorization: Basic ${env:GRAFANA_CLOUD_AUTH}
+  # El endpoint de Grafana Cloud (…grafana.net/otlp) es OTLP/HTTP, no gRPC.
+  # Por eso usamos `otlphttp`, no `otlp`. El collector agrega automáticamente
+  # /v1/traces, /v1/metrics, /v1/logs según el signal.
+  otlphttp/cloud:
+    endpoint: ${env:GRAFANA_CLOUD_OTLP_ENDPOINT}
+    headers:
+      authorization: Basic ${env:GRAFANA_CLOUD_AUTH}
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [resourcedetection, batch]
-      exporters: [otlp/lgtm, debug]
+      exporters: [otlp/lgtm, otlphttp/cloud, debug]
     metrics:
       receivers: [otlp]
       processors: [resourcedetection, batch]
-      exporters: [otlp/lgtm, debug]
+      exporters: [otlp/lgtm, otlphttp/cloud, debug]
     logs:
       receivers: [otlp]
       processors: [resourcedetection, batch]
-      exporters: [otlp/lgtm, debug]
+      exporters: [otlp/lgtm, otlphttp/cloud, debug]
